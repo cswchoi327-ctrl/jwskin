@@ -1,10 +1,12 @@
 /**
  * admin.js - 관리자 화면 JavaScript
- * 템플릿 기반 자동 생성 (파소나 법칙 적용, 100% 무료)
+ * 템플릿 기반 자동 생성
  */
 
-(function($) {
+jQuery(document).ready(function($) {
     'use strict';
+    
+    console.log('Admin JS 로드됨');
     
     // 파소나 법칙 적용 템플릿 데이터베이스
     const templates = {
@@ -74,54 +76,92 @@
         }
     };
     
-    $(document).ready(function() {
-        const generateBtn = $('#generate-content-btn');
-        const statusDiv = $('#generation-status');
+    // 생성 버튼 클릭 이벤트
+    const generateBtn = $('#generate-content-btn');
+    const statusDiv = $('#generation-status');
+    
+    console.log('버튼 찾기:', generateBtn.length);
+    
+    if (!generateBtn.length) {
+        console.error('생성 버튼을 찾을 수 없습니다!');
+        return;
+    }
+    
+    generateBtn.on('click', function(e) {
+        e.preventDefault();
+        console.log('버튼 클릭됨');
         
-        if (!generateBtn.length) return;
+        const keyword = $('#card_keyword').val().trim();
+        console.log('입력된 키워드:', keyword);
         
-        generateBtn.on('click', function() {
-            const keyword = $('#card_keyword').val().trim();
+        if (!keyword) {
+            showStatus('error', '❌ 키워드를 입력해주세요!');
+            return;
+        }
+        
+        generateBtn.prop('disabled', true).text('🤖 생성 중...');
+        showStatus('loading', '⏳ 콘텐츠를 생성하고 있습니다...');
+        
+        // 짧은 딜레이로 로딩 효과
+        setTimeout(function() {
+            let result;
             
-            if (!keyword) {
-                showStatus('error', '❌ 키워드를 입력해주세요!');
-                return;
+            // 템플릿에서 찾기
+            if (templates[keyword]) {
+                console.log('템플릿 발견:', keyword);
+                result = templates[keyword];
+            } else {
+                console.log('키워드 기반 생성:', keyword);
+                result = generateFromKeyword(keyword);
             }
             
-            generateBtn.prop('disabled', true).text('🤖 생성 중...');
-            showStatus('loading', '⏳ 파소나 법칙을 적용한 콘텐츠를 생성하고 있습니다...');
+            console.log('생성 결과:', result);
             
-            // 짧은 딜레이로 로딩 효과
-            setTimeout(function() {
-                let result;
-                
-                // 템플릿에서 찾기
-                if (templates[keyword]) {
-                    result = templates[keyword];
-                } else {
-                    // 템플릿에 없으면 키워드 기반 자동 생성
-                    result = generateFromKeyword(keyword);
+            // 폼 자동 입력
+            $('#card_amount').val(result.amount);
+            $('#card_amount_sub').val(result.amount_sub);
+            $('#card_target').val(result.target);
+            $('#card_period').val(result.period);
+            
+            // 제목 입력
+            $('#title').val(result.title);
+            
+            // 본문 입력 (비주얼/텍스트 에디터 모두 지원)
+            const contentField = $('#content');
+            if (contentField.length) {
+                contentField.val(result.description);
+            }
+            
+            // TinyMCE 에디터가 있다면
+            if (typeof tinymce !== 'undefined') {
+                const editor = tinymce.get('content');
+                if (editor) {
+                    editor.setContent(result.description);
                 }
-                
-                // 폼 자동 입력
-                $('#card_amount').val(result.amount);
-                $('#card_amount_sub').val(result.amount_sub);
-                $('#card_target').val(result.target);
-                $('#card_period').val(result.period);
-                
-                // 제목과 본문
-                $('#title').val(result.title);
-                if (typeof tinymce !== 'undefined' && tinymce.get('content')) {
-                    tinymce.get('content').setContent(result.description);
-                } else {
-                    $('#content').val(result.description);
-                }
-                
-                showStatus('success', '✅ 콘텐츠 생성 완료! 파소나 법칙이 적용되었습니다. 필요시 수정하세요.');
-                generateBtn.prop('disabled', false).text('✨ 콘텐츠 자동 생성');
-                
-            }, 800);
-        });
+            }
+            
+            // 클래식 에디터 textarea
+            if (typeof wp !== 'undefined' && wp.editor) {
+                wp.editor.remove('content');
+                wp.editor.initialize('content', {
+                    tinymce: true,
+                    quicktags: true
+                });
+                setTimeout(function() {
+                    const ed = tinymce.get('content');
+                    if (ed) {
+                        ed.setContent(result.description);
+                    }
+                }, 100);
+            }
+            
+            showStatus('success', '✅ 콘텐츠 생성 완료! 필요시 수정 후 발행하세요.');
+            generateBtn.prop('disabled', false).text('✨ 콘텐츠 자동 생성 (AI)');
+            
+            console.log('폼 입력 완료');
+            
+        }, 800);
+    });
         
         // 키워드 기반 자동 생성
         function generateFromKeyword(keyword) {
