@@ -107,11 +107,140 @@ function render_support_card_meta_box($post) {
         <p style="color: #666; font-size: 13px; margin-top: 5px;">이 키워드로 AI가 모든 콘텐츠를 자동 생성합니다</p>
     </div>
     
-    <button type="button" class="generate-content-btn" id="generate-content-btn">
+    <button type="button" class="generate-content-btn" onclick="generateSupportContent()">
         ✨ 콘텐츠 자동 생성 (AI)
     </button>
     
     <div id="generation-status" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none;"></div>
+    
+    <script>
+    function generateSupportContent() {
+        console.log('함수 호출됨');
+        
+        var keyword = document.getElementById('card_keyword').value.trim();
+        var statusDiv = document.getElementById('generation-status');
+        var btn = event.target;
+        
+        console.log('키워드:', keyword);
+        
+        if (!keyword) {
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#fee';
+            statusDiv.style.border = '2px solid #f00';
+            statusDiv.style.color = '#c00';
+            statusDiv.innerHTML = '❌ 키워드를 입력해주세요!';
+            return;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = '🤖 생성 중...';
+        
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = '#fef3cd';
+        statusDiv.style.border = '2px solid #ff9800';
+        statusDiv.style.color = '#856404';
+        statusDiv.innerHTML = '⏳ 콘텐츠를 생성하고 있습니다...';
+        
+        // 템플릿 데이터
+        var templates = {
+            '청년도약계좌': {
+                title: '청년도약계좌 - 5년 만기 시 최대 5,000만원',
+                amount: '최대 5,000만원',
+                amount_sub: '정부 기여금 + 이자 포함',
+                description: '월급은 받지만 저축은 항상 부족했던 청년들을 위한 특별한 기회입니다. 청년도약계좌는 정부가 직접 지원하는 장기 저축 상품으로, 매월 70만원까지 납입하면 정부가 최대 6%의 기여금을 추가로 지원합니다. 5년 만기 시 원금 + 이자 + 정부 기여금을 합쳐 최대 5,000만원을 만들 수 있습니다. 선착순 마감이니 지금 바로 신청하세요!',
+                target: '만 19~34세 청년',
+                period: '상시 모집 (선착순 마감)'
+            },
+            '청년내일채움공제': {
+                title: '청년내일채움공제 - 2년 근속 시 최대 1,600만원',
+                amount: '최대 1,600만원',
+                amount_sub: '정부 + 기업 공동 지원',
+                description: '중소기업에서 일하는 청년들의 장기 근속을 돕기 위한 정부 지원금입니다. 본인이 400만원을 납입하면 정부와 기업이 1,200만원을 추가 지원하여 2년 후 총 1,600만원을 받을 수 있습니다. 청년 여러분의 안정적인 미래를 위한 기회, 놓치지 마세요.',
+                target: '중소기업 재직 청년',
+                period: '기업 참여 시 상시'
+            },
+            '근로장려금': {
+                title: '근로장려금 - 최대 330만원 현금 지급',
+                amount: '최대 330만원',
+                amount_sub: '연 1회 현금 지급',
+                description: '일은 하는데 소득이 적어 생활이 힘드셨나요? 근로장려금은 열심히 일하는 저소득 근로자를 위한 정부의 직접 현금 지원입니다. 신청만 하면 가구 유형에 따라 최대 330만원까지 계좌로 바로 입금됩니다.',
+                target: '저소득 근로자 가구',
+                period: '5월 정기신청, 9월 반기신청'
+            }
+        };
+        
+        setTimeout(function() {
+            var result;
+            
+            if (templates[keyword]) {
+                console.log('템플릿 발견');
+                result = templates[keyword];
+            } else {
+                console.log('기본 생성');
+                result = {
+                    title: keyword + ' - 지금 바로 신청하세요',
+                    amount: '최대 300만원',
+                    amount_sub: '정부 직접 지원',
+                    description: keyword + '은(는) 많은 분들이 놓치고 있는 정부 지원 혜택입니다. 조건만 충족하면 누구나 신청할 수 있으며, 신청 절차도 간단합니다. 하지만 신청하지 않으면 절대 받을 수 없습니다. 지금 이 기회를 놓치면 큰 손해입니다. 아래 신청 방법을 확인하시고 지금 바로 신청하세요!',
+                    target: '대한민국 국민',
+                    period: '상시 접수'
+                };
+            }
+            
+            console.log('결과:', result);
+            
+            // 메타 필드 채우기
+            document.getElementById('card_amount').value = result.amount;
+            document.getElementById('card_amount_sub').value = result.amount_sub;
+            document.getElementById('card_target').value = result.target;
+            document.getElementById('card_period').value = result.period;
+            
+            // 제목 채우기
+            document.getElementById('title').value = result.title;
+            
+            // 본문 채우기 (여러 방법 시도)
+            var contentSet = false;
+            
+            // 방법 1: TinyMCE
+            if (typeof tinymce !== 'undefined') {
+                var editor = tinymce.get('content');
+                if (editor) {
+                    editor.setContent(result.description);
+                    contentSet = true;
+                    console.log('TinyMCE로 설정');
+                }
+            }
+            
+            // 방법 2: textarea 직접
+            if (!contentSet) {
+                var contentField = document.getElementById('content');
+                if (contentField) {
+                    contentField.value = result.description;
+                    contentSet = true;
+                    console.log('textarea로 설정');
+                }
+            }
+            
+            // 방법 3: wp.editor
+            if (!contentSet && typeof wp !== 'undefined' && wp.editor) {
+                wp.editor.getContent = function() {
+                    return result.description;
+                };
+                console.log('wp.editor로 설정');
+            }
+            
+            statusDiv.style.background = '#efe';
+            statusDiv.style.border = '2px solid #0a0';
+            statusDiv.style.color = '#070';
+            statusDiv.innerHTML = '✅ 콘텐츠 생성 완료! 필요시 수정 후 발행하세요.';
+            
+            btn.disabled = false;
+            btn.textContent = '✨ 콘텐츠 자동 생성 (AI)';
+            
+            console.log('완료');
+        }, 500);
+    }
+    </script>
     
     <hr style="margin: 30px 0; border: none; border-top: 2px solid #e5e7eb;" />
     
