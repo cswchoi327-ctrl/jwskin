@@ -1,11 +1,11 @@
 <?php
-function support_theme_setup(){add_theme_support('title-tag');add_theme_support('post-thumbnails');register_nav_menus(['primary'=>'메인']);}
+function support_theme_setup(){add_theme_support('title-tag');add_theme_support('post-thumbnails');add_theme_support('html5',['search-form','comment-form','comment-list','gallery','caption']);register_nav_menus(['primary'=>'메인 메뉴']);}
 add_action('after_setup_theme','support_theme_setup');
-function support_enqueue_scripts(){wp_enqueue_style('support-style',get_stylesheet_uri());}
+function support_enqueue_scripts(){wp_enqueue_style('support-style',get_stylesheet_uri(),array(),filemtime(get_template_directory().'/style.css'));}
 add_action('wp_enqueue_scripts','support_enqueue_scripts');
-function register_support_card_cpt(){register_post_type('support_card',['labels'=>['name'=>'지원금 카드','singular_name'=>'카드','add_new'=>'새 카드'],'public'=>true,'has_archive'=>false,'menu_icon'=>'dashicons-money-alt','supports'=>['title','editor','custom-fields'],'show_in_rest'=>true]);}
+function register_support_card_cpt(){register_post_type('support_card',['labels'=>['name'=>'지원금 카드','singular_name'=>'카드','add_new'=>'새 카드 추가','add_new_item'=>'새 카드 추가','edit_item'=>'카드 수정','view_item'=>'카드 보기','all_items'=>'모든 카드'],'public'=>true,'publicly_queryable'=>true,'show_ui'=>true,'show_in_menu'=>true,'has_archive'=>false,'menu_icon'=>'dashicons-money-alt','supports'=>['title','editor','custom-fields'],'show_in_rest'=>true,'rewrite'=>['slug'=>'support']]);flush_rewrite_rules();}
 add_action('init','register_support_card_cpt');
-function add_support_card_meta_boxes(){add_meta_box('support_card_details','카드 정보','render_support_card_meta_box','support_card','normal','high');}
+function add_support_card_meta_boxes(){add_meta_box('support_card_details','💰 카드 정보 자동 생성','render_support_card_meta_box','support_card','normal','high');}
 add_action('add_meta_boxes','add_support_card_meta_boxes');
 function render_support_card_meta_box($post){wp_nonce_field('support_card_save','support_card_nonce');$amount=get_post_meta($post->ID,'_card_amount',true);$amount_sub=get_post_meta($post->ID,'_card_amount_sub',true);$target=get_post_meta($post->ID,'_card_target',true);$period=get_post_meta($post->ID,'_card_period',true);$link=get_post_meta($post->ID,'_card_link',true);$featured=get_post_meta($post->ID,'_card_featured',true);?>
 <style>.sp-field{margin:15px 0}.sp-field label{display:block;font-weight:600;margin-bottom:5px}.sp-field input{width:100%;padding:8px;border:1px solid #ddd;border-radius:4px}.sp-btn{background:linear-gradient(135deg,#2563EB 0%,#7C3AED 100%);color:#fff;border:none;padding:15px 30px;border-radius:8px;font-weight:700;cursor:pointer;margin:10px 0;font-size:16px}.sp-btn:hover{background:linear-gradient(135deg,#1E40AF 0%,#6D28D9 100%)}.sp-notice{background:#FEF3C7;padding:15px;margin:15px 0;border-left:4px solid #F59E0B;border-radius:4px}.sp-alert{padding:15px;margin:15px 0;border-radius:8px;font-weight:600}</style>
