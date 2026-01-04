@@ -5,6 +5,85 @@ function support_enqueue_scripts(){wp_enqueue_style('support-style',get_styleshe
 add_action('wp_enqueue_scripts','support_enqueue_scripts');
 function register_support_card_cpt(){register_post_type('support_card',['labels'=>['name'=>'지원금 카드','singular_name'=>'카드','add_new'=>'새 카드 추가','add_new_item'=>'새 카드 추가','edit_item'=>'카드 수정','view_item'=>'카드 보기','all_items'=>'모든 카드'],'public'=>true,'publicly_queryable'=>true,'show_ui'=>true,'show_in_menu'=>true,'has_archive'=>false,'menu_icon'=>'dashicons-money-alt','supports'=>['title','editor','custom-fields'],'show_in_rest'=>true,'rewrite'=>['slug'=>'support']]);flush_rewrite_rules();}
 add_action('init','register_support_card_cpt');
+
+/* 탭메뉴 설정 페이지 */
+function support_tabs_menu(){add_theme_page('탭메뉴 설정','탭메뉴 설정','manage_options','support-tabs','support_tabs_page');}
+add_action('admin_menu','support_tabs_menu');
+function support_tabs_page(){if(isset($_POST['support_tabs_save'])){check_admin_referer('support_tabs_action','support_tabs_nonce');$tabs=[];for($i=1;$i<=10;$i++){if(!empty($_POST["tab_name_$i"])){$tabs[]=array('name'=>sanitize_text_field($_POST["tab_name_$i"]),'link'=>esc_url_raw($_POST["tab_link_$i"]),'target'=>sanitize_text_field($_POST["tab_target_$i"]));}}update_option('support_tabs',$tabs);echo '<div class="updated"><p>✅ 탭메뉴가 저장되었습니다!</p></div>';}$tabs=get_option('support_tabs',[]);?>
+<div class="wrap">
+<h1>🔖 탭메뉴 설정</h1>
+<p>홈페이지 상단에 표시될 탭메뉴를 설정하세요. 최대 10개까지 추가 가능합니다.</p>
+<form method="post">
+<?php wp_nonce_field('support_tabs_action','support_tabs_nonce');?>
+<style>
+.tabs-table{width:100%;background:#fff;border:1px solid #ddd;border-radius:8px;margin:20px 0}
+.tabs-table th{background:#f5f5f5;padding:12px;text-align:left;font-weight:600;border-bottom:2px solid #ddd}
+.tabs-table td{padding:12px;border-bottom:1px solid #eee}
+.tabs-table input[type="text"]{width:100%;padding:8px;border:1px solid #ddd;border-radius:4px}
+.tabs-table select{padding:8px;border:1px solid #ddd;border-radius:4px}
+.save-btn{background:#2563EB;color:#fff;padding:12px 30px;border:none;border-radius:6px;font-size:16px;font-weight:700;cursor:pointer}
+.save-btn:hover{background:#1E40AF}
+.notice-info{background:#E0F2FE;border-left:4px solid #0EA5E9;padding:15px;margin:20px 0;border-radius:4px}
+</style>
+<div class="notice-info">
+<strong>💡 사용 팁:</strong>
+<ul style="margin:10px 0 0 20px">
+<li>탭 이름: 메뉴에 표시될 텍스트 (예: 홈, 소개, 문의)</li>
+<li>링크: 클릭 시 이동할 URL (예: https://example.com 또는 /about)</li>
+<li>새창: 링크를 새 창에서 열지 선택</li>
+<li>빈 칸은 자동으로 무시됩니다</li>
+</ul>
+</div>
+<table class="tabs-table">
+<thead>
+<tr>
+<th style="width:50px">순서</th>
+<th style="width:25%">탭 이름</th>
+<th style="width:45%">링크</th>
+<th style="width:15%">새창 열기</th>
+<th style="width:15%">미리보기</th>
+</tr>
+</thead>
+<tbody>
+<?php for($i=1;$i<=10;$i++){$tab=$tabs[$i-1]??null;?>
+<tr>
+<td style="text-align:center;font-weight:700;color:#666"><?php echo $i;?></td>
+<td><input type="text" name="tab_name_<?php echo $i;?>" value="<?php echo $tab?esc_attr($tab['name']):'';?>" placeholder="예: 홈"/></td>
+<td><input type="text" name="tab_link_<?php echo $i;?>" value="<?php echo $tab?esc_attr($tab['link']):'';?>" placeholder="예: <?php echo home_url('/');?>"/></td>
+<td>
+<select name="tab_target_<?php echo $i;?>">
+<option value="_self" <?php if($tab&&$tab['target']=='_self')echo 'selected';?>>현재 창</option>
+<option value="_blank" <?php if($tab&&$tab['target']=='_blank')echo 'selected';?>>새 창</option>
+</select>
+</td>
+<td style="text-align:center">
+<?php if($tab):?>
+<a href="<?php echo esc_url($tab['link']);?>" target="<?php echo esc_attr($tab['target']);?>" style="color:#2563EB;text-decoration:none">🔗 보기</a>
+<?php else:?>
+<span style="color:#ccc">-</span>
+<?php endif;?>
+</td>
+</tr>
+<?php }?>
+</tbody>
+</table>
+<p style="text-align:center;margin:30px 0">
+<button type="submit" name="support_tabs_save" class="save-btn">💾 탭메뉴 저장</button>
+</p>
+</form>
+<div class="notice-info" style="margin-top:30px">
+<strong>📌 기본 탭 예시:</strong>
+<ul style="margin:10px 0 0 20px">
+<li><strong>홈:</strong> <?php echo home_url('/');?></li>
+<li><strong>전체 지원금:</strong> <?php echo home_url('/');?></li>
+<li><strong>청년 지원:</strong> <?php echo home_url('/?filter=youth');?></li>
+<li><strong>노인 지원:</strong> <?php echo home_url('/?filter=senior');?></li>
+<li><strong>문의하기:</strong> <?php echo home_url('/contact');?></li>
+</ul>
+</div>
+</div>
+<?php }
+
 function add_support_card_meta_boxes(){add_meta_box('support_card_details','💰 카드 정보 자동 생성','render_support_card_meta_box','support_card','normal','high');}
 add_action('add_meta_boxes','add_support_card_meta_boxes');
 function render_support_card_meta_box($post){wp_nonce_field('support_card_save','support_card_nonce');$amount=get_post_meta($post->ID,'_card_amount',true);$amount_sub=get_post_meta($post->ID,'_card_amount_sub',true);$target=get_post_meta($post->ID,'_card_target',true);$period=get_post_meta($post->ID,'_card_period',true);$link=get_post_meta($post->ID,'_card_link',true);$featured=get_post_meta($post->ID,'_card_featured',true);?>
