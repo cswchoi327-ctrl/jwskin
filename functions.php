@@ -2,7 +2,7 @@
 /**
  * Functions.php - 핵심 기능
  * - 관리자 화면에서 카드 관리
- * - 키워드만 입력하면 AI가 파소나 법칙 적용하여 콘텐츠 자동 생성
+ * - 키워드만 입력하면 템플릿 기반으로 콘텐츠 자동 생성
  * - 모든 광고 플랫폼 지원
  */
 
@@ -22,19 +22,28 @@ add_action('after_setup_theme', 'support_theme_setup');
 // ==================== 스타일/스크립트 로드 ====================
 function support_enqueue_scripts() {
     wp_enqueue_style('support-style', get_stylesheet_uri());
-    
-    if (is_admin()) {
-        wp_enqueue_script('support-admin-js', get_template_directory_uri() . '/js/admin.js', ['jquery'], '1.0', true);
-        wp_localize_script('support-admin-js', 'supportAdmin', [
-            'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('support_admin_nonce')
-        ]);
-    } else {
-        wp_enqueue_script('support-front-js', get_template_directory_uri() . '/js/front.js', [], '1.0', true);
-    }
+    wp_enqueue_script('support-front-js', get_template_directory_uri() . '/js/front.js', [], '1.0', true);
 }
 add_action('wp_enqueue_scripts', 'support_enqueue_scripts');
-add_action('admin_enqueue_scripts', 'support_enqueue_scripts');
+
+function support_admin_enqueue_scripts($hook) {
+    // 지원금 카드 편집 페이지에서만 로드
+    if ($hook !== 'post.php' && $hook !== 'post-new.php') {
+        return;
+    }
+    
+    global $post_type;
+    if ($post_type !== 'support_card') {
+        return;
+    }
+    
+    wp_enqueue_script('support-admin-js', get_template_directory_uri() . '/js/admin.js', ['jquery'], '1.0.1', true);
+    wp_localize_script('support-admin-js', 'supportAdmin', [
+        'ajaxurl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce('support_admin_nonce')
+    ]);
+}
+add_action('admin_enqueue_scripts', 'support_admin_enqueue_scripts');
 
 // ==================== 커스텀 포스트 타입 ====================
 function register_support_card_cpt() {
